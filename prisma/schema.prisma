@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  password  String
+  role      String    @default("user")
+  plan      String    @default("free")
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  sessions  Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ScrapedPost {
+  id               String           @id @default(cuid())
+  sourceUrl        String
+  pageName         String           @default("")
+  text             String
+  likes            Int              @default(0)
+  shares           Int              @default(0)
+  comments         Int              @default(0)
+  postUrl          String?
+  postDate         DateTime?
+  analysis         String?
+  rewrittenContent String?
+  nicheProfileId   String?
+  nicheCustom      String?
+  createdAt        DateTime         @default(now())
+  nicheProfile     NicheProfile?    @relation(fields: [nicheProfileId], references: [id])
+  rewrites         RewriteHistory[]
+}
+
+model RewriteHistory {
+  id             String        @id @default(cuid())
+  postId         String
+  nicheProfileId String?
+  nicheCustom    String?
+  content        String
+  createdAt      DateTime      @default(now())
+  post           ScrapedPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  nicheProfile   NicheProfile? @relation(fields: [nicheProfileId], references: [id])
+}
+
+model NicheProfile {
+  id            String           @id @default(cuid())
+  name          String
+  description   String
+  toneOfVoice   String?
+  keywords      String?
+  bannedWords   String?
+  desiredLength String?
+  ctaTemplate   String?
+  createdAt     DateTime         @default(now())
+  posts         ScrapedPost[]
+  rewrites      RewriteHistory[]
+}
